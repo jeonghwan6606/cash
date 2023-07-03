@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-@WebServlet("/CalendarController")
+@WebServlet("/calendar")
 public class CalendarController extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -23,16 +23,23 @@ public class CalendarController extends HttpServlet {
 		firstDay.set(Calendar.DATE, 1);
 		
 		// 출력하고자하는 년도와 월이 매개값으로 넘어왔다면 바꾸어 준다
-		if(request.getParameter("targetYear") != null 
-				&& request.getParameter("targetMonth") != null) {
-			 targetYear = Integer.parseInt(request.getParameter("targetYear"));
-			 targetMonth = Integer.parseInt(request.getParameter("targetMonth"));
-			firstDay.set(Calendar.YEAR, targetYear);
-			firstDay.set(Calendar.MONTH, targetMonth);
-		}
-		
-		
-		
+		// 출력하고자하는 년도와 월이 매개값으로 넘어왔다면
+				if(request.getParameter("targetYear") != null
+					&& request.getParameter("targetMonth") != null) {
+					
+					targetYear = Integer.parseInt(request.getParameter("targetYear"));
+					// api를 통해 12가 들어오면 월1, 년 +1
+					// api를 통해 -1이 입력되면 월은 12 년은 -1
+					targetMonth = Integer.parseInt(request.getParameter("targetMonth"));
+					
+					
+					firstDay.set(Calendar.YEAR,targetYear);
+					firstDay.set(Calendar.MONTH,targetMonth);
+					
+					targetYear = firstDay.get(Calendar.YEAR);
+					targetMonth = firstDay.get(Calendar.MONTH);
+				}
+			
 		// 달력출력시 시작 공백 개수 -> 1일날짜의 요일(일1, 월2,...토6) - 1
 		int beginBlank = firstDay.get(Calendar.DAY_OF_WEEK)-1;
 		System.out.println(beginBlank+" <- beginBlank");
@@ -42,16 +49,21 @@ public class CalendarController extends HttpServlet {
 		System.out.println(lastDate+" <- lastDate");
 		
 		// 달력출력시 마지막 날짜 출력 후 공백 개수 -> 전체 출력 셀(totalCell)의 개수가 7로 나누어 떨어져야 한다
-		int endBalnk = 0;
+		int endBlank = 0;
 		if(((beginBlank+lastDate)%7) != 0) {
-			endBalnk = 7 - ((beginBlank+lastDate)%7);
+			endBlank = 7 - ((beginBlank+lastDate)%7);
 		}
-		int totalCell = beginBlank+lastDate+endBalnk;
+		int totalCell = beginBlank+lastDate+endBlank;
 		System.out.println(totalCell+" <- totalCell");
-		System.out.println(endBalnk+" <- endBalnk");
+		System.out.println(endBlank+" <- endBlank");
 		
-		//뷰에 값넘기기(request. 속성)
-		request.setAttribute
+		// 뷰에 값넘기기(request 속성)
+		request.setAttribute("targetYear", targetYear);
+		request.setAttribute("targetMonth", targetMonth);
+		request.setAttribute("lastDate", lastDate);
+		request.setAttribute("totalCell", totalCell);
+		request.setAttribute("beginBlank", beginBlank);
+		request.setAttribute("endBlank", endBlank);
 		
 		//
 		request.getRequestDispatcher("/WEB-INF/view/calendar.jsp").forward(request, response);
