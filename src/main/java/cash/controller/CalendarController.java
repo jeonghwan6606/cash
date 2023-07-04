@@ -3,22 +3,35 @@ package cash.controller;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import cash.model.CashbookDao;
+import cash.model.HashtagDao;
 import cash.vo.Cashbook;
+import cash.vo.Hashtag;
+import cash.vo.Member;
 
 @WebServlet("/calendar")
 public class CalendarController extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// session 인증 검사
-		String memberId = "user"; // session안에 로그인정보가 필요
+		 HttpSession session = request.getSession();
+	      if(session.getAttribute("loginMember") == null) {
+	         response.sendRedirect(request.getContextPath() + "/login");
+	         return;
+	      } 
+		  
+	      Member member = (Member)session.getAttribute("loginMember");
+	      
+	      String memberId = member.getMemberId();
 		
 		// view에 넘겨줄 달력정보(모델값)
 		Calendar firstDay = Calendar.getInstance(); // 오늘날짜
@@ -62,6 +75,11 @@ public class CalendarController extends HttpServlet {
 		List<Cashbook> list 
 			= new CashbookDao().selectCashbookListByMonth(memberId, targetYear, targetMonth+1);
 		
+		List<Map<String, Object>> htList 
+		= new HashtagDao().selectWordCountByMonth(memberId, targetYear, targetMonth+1);
+
+		System.out.println(htList.size());
+		
 		// 뷰에 값넘기기(request 속성)
 		request.setAttribute("targetYear", targetYear);
 		request.setAttribute("targetMonth", targetMonth);
@@ -71,6 +89,7 @@ public class CalendarController extends HttpServlet {
 		request.setAttribute("endBlank", endBlank);
 		
 		request.setAttribute("list", list);;
+		request.setAttribute("htList", htList);;
 		
 		// 달력을 출력하는 뷰
 		request.getRequestDispatcher("/WEB-INF/view/calendar.jsp").forward(request, response);

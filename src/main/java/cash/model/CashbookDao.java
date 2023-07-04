@@ -134,8 +134,6 @@ public class CashbookDao {
 	        	c.setUpdatedate(rs.getString("updatedate"));
 	        	c.setCreatedate(rs.getString("createdate"));
 	        	list.add(c);
-	            
-	            list.add(c);
 	        }
 		} catch (Exception e1) {
 			e1.printStackTrace();	
