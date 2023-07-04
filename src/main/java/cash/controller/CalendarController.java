@@ -2,6 +2,7 @@ package cash.controller;
 
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -9,37 +10,37 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import cash.model.CashbookDao;
+import cash.vo.Cashbook;
+
 @WebServlet("/calendar")
 public class CalendarController extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// session 인증 검사
-			
+		String memberId = "user"; // session안에 로그인정보가 필요
+		
 		// view에 넘겨줄 달력정보(모델값)
 		Calendar firstDay = Calendar.getInstance(); // 오늘날짜
 		
-		int targetYear= firstDay.get(Calendar.YEAR);
+		// 출력하고자하는 년도,월,일의 기본값은 이번달 1일
+		int targetYear = firstDay.get(Calendar.YEAR);
 		int targetMonth = firstDay.get(Calendar.MONTH);
 		firstDay.set(Calendar.DATE, 1);
 		
-		// 출력하고자하는 년도와 월이 매개값으로 넘어왔다면 바꾸어 준다
 		// 출력하고자하는 년도와 월이 매개값으로 넘어왔다면
-				if(request.getParameter("targetYear") != null
-					&& request.getParameter("targetMonth") != null) {
-					
-					targetYear = Integer.parseInt(request.getParameter("targetYear"));
-					// api를 통해 12가 들어오면 월1, 년 +1
-					// api를 통해 -1이 입력되면 월은 12 년은 -1
-					targetMonth = Integer.parseInt(request.getParameter("targetMonth"));
-					
-					
-					firstDay.set(Calendar.YEAR,targetYear);
-					firstDay.set(Calendar.MONTH,targetMonth);
-					
-					targetYear = firstDay.get(Calendar.YEAR);
-					targetMonth = firstDay.get(Calendar.MONTH);
-				}
-			
+		if(request.getParameter("targetYear") != null 
+				&& request.getParameter("targetMonth") != null) {
+			firstDay.set(Calendar.YEAR, Integer.parseInt(request.getParameter("targetYear")));
+			// API에서 자동으로 Calendar.MONTH값으로 12가 입력되면 월은 1, 년 +1
+			// API에서 자동으로 Calendar.MONTH값으로 -1이 입력되면 월은 12, 년 -1
+			firstDay.set(Calendar.MONTH, Integer.parseInt(request.getParameter("targetMonth")));
+
+			 targetYear = firstDay.get(Calendar.YEAR);
+			 targetMonth = firstDay.get(Calendar.MONTH);
+		}
+
+
 		// 달력출력시 시작 공백 개수 -> 1일날짜의 요일(일1, 월2,...토6) - 1
 		int beginBlank = firstDay.get(Calendar.DAY_OF_WEEK)-1;
 		System.out.println(beginBlank+" <- beginBlank");
@@ -57,6 +58,10 @@ public class CalendarController extends HttpServlet {
 		System.out.println(totalCell+" <- totalCell");
 		System.out.println(endBlank+" <- endBlank");
 		
+		// 모델을 호출(DAO 타켓 월의 수입/지출 데이터)
+		List<Cashbook> list 
+			= new CashbookDao().selectCashbookListByMonth(memberId, targetYear, targetMonth+1);
+		
 		// 뷰에 값넘기기(request 속성)
 		request.setAttribute("targetYear", targetYear);
 		request.setAttribute("targetMonth", targetMonth);
@@ -65,7 +70,9 @@ public class CalendarController extends HttpServlet {
 		request.setAttribute("beginBlank", beginBlank);
 		request.setAttribute("endBlank", endBlank);
 		
-		//
+		request.setAttribute("list", list);;
+		
+		// 달력을 출력하는 뷰
 		request.getRequestDispatcher("/WEB-INF/view/calendar.jsp").forward(request, response);
-	}	
+	}
 }

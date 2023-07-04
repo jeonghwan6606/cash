@@ -47,7 +47,7 @@ public class LoginController extends HttpServlet {
 		System.out.println("로그인 성공");
 		
 		session.setAttribute("loginMember", loginMember);
-		response.sendRedirect(request.getContextPath()+"/cashbook");
+		response.sendRedirect(request.getContextPath()+"/calendar");
 	}
 
 }
