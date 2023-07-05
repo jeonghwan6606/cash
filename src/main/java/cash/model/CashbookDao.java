@@ -30,7 +30,7 @@ public class CashbookDao {
 			String dbPw = "java1234";
 			Class.forName(driver);
 			conn = DriverManager.getConnection(dbUrl, dbUser, dbPw);
-			 stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			stmt.setString(1, cashbook.getMemberId());
 			stmt.setString(2, cashbook.getCategory());
 			stmt.setString(3, cashbook.getCashbookDate());
@@ -58,6 +58,68 @@ public class CashbookDao {
 		return cashbookNo;
 	}
 	
+	public List<Cashbook> selectCashbookListByTag(String memberId, String word, int beginRow, int rowPerPage) {
+	    List<Cashbook> list = new ArrayList<Cashbook>();
+	    Connection conn = null;
+	    PreparedStatement stmt = null;
+	    ResultSet rs = null;
+
+	    String sql = "SELECT * FROM cashbook cb " +
+	            "WHERE cb.member_id = ? " +
+	            "AND EXISTS (SELECT * FROM hashtag h " +
+	            "            WHERE h.cashbook_no = cb.cashbook_no " +
+	            "            AND h.word = ?) " +
+	            "ORDER BY cb.cashbook_no DESC " +
+	            "LIMIT ?, ?";
+
+	    try {
+	        String driver = "org.mariadb.jdbc.Driver";
+	        String dbUrl = "jdbc:mariadb://127.0.0.1:3306/cash";
+	        String dbUser = "root";
+	        String dbPw = "java1234";
+	        Class.forName(driver);
+	        conn = DriverManager.getConnection(dbUrl, dbUser, dbPw);
+	        stmt = conn.prepareStatement(sql);
+	        stmt.setString(1, memberId);
+	        stmt.setString(2, word);
+	        stmt.setInt(3, beginRow);
+	        stmt.setInt(4, rowPerPage);
+
+	        rs = stmt.executeQuery();
+	        while (rs.next()) {
+	            Cashbook cashbook = new Cashbook();
+	            cashbook.setCashbookNo(rs.getInt("cashbook_no"));
+	            cashbook.setMemberId(rs.getString("member_id"));
+	            cashbook.setCategory(rs.getString("category"));
+	            cashbook.setCashbookDate(rs.getString("cashbook_date"));
+	            cashbook.setPrice(rs.getInt("price"));
+	            cashbook.setMemo(rs.getString("memo"));
+	            cashbook.setCreatedate(rs.getString("createdate"));
+	            cashbook.setUpdatedate(rs.getString("updatedate"));
+
+	            list.add(cashbook);
+	        }
+	    } catch (ClassNotFoundException e) {
+	        e.printStackTrace();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    } finally {
+	        try {
+	            if (rs != null) {
+	                rs.close();
+	            }
+	            if (stmt != null) {
+	                stmt.close();
+	            }
+	            if (conn != null) {
+	                conn.close();
+	            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        }
+	    }
+	    return list;
+	}
 	
 	public List<Cashbook> selectCashbookListByMonth(
 			String memberId, int tagetYear, int tagetMonth) {
@@ -147,5 +209,54 @@ public class CashbookDao {
 			}	
 		}
 		return list;
+	}
+	
+	public int getSearchCount(String memberId, String word) {
+	    int count = 0;
+	    Connection conn = null;
+	    PreparedStatement stmt = null;
+	    ResultSet rs = null;
+
+	    String sql = "SELECT COUNT(*) FROM cashbook cb " +
+	            "WHERE cb.member_id = ? " +
+	            "AND EXISTS (SELECT * FROM hashtag h " +
+	            "            WHERE h.cashbook_no = cb.cashbook_no " +
+	            "            AND h.word = ?)";
+
+	    try {
+	        String driver = "org.mariadb.jdbc.Driver";
+	        String dbUrl = "jdbc:mariadb://127.0.0.1:3306/cash";
+	        String dbUser = "root";
+	        String dbPw = "java1234";
+	        Class.forName(driver);
+	        conn = DriverManager.getConnection(dbUrl, dbUser, dbPw);
+	        stmt = conn.prepareStatement(sql);
+	        stmt.setString(1, memberId);
+	        stmt.setString(2, word);
+
+	        rs = stmt.executeQuery();
+	        if (rs.next()) {
+	            count = rs.getInt(1);
+	        }
+	    } catch (ClassNotFoundException e) {
+	        e.printStackTrace();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    } finally {
+	        try {
+	            if (rs != null) {
+	                rs.close();
+	            }
+	            if (stmt != null) {
+	                stmt.close();
+	            }
+	            if (conn != null) {
+	                conn.close();
+	            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        }
+	    }
+	    return count;
 	}
 }
